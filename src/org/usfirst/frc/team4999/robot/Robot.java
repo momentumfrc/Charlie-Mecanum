@@ -84,16 +84,22 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		double x = 0, y = 0, twist = 0;
+		double x = 0, y = 0, twist = 0, speedLimit = 1;
 		switch(mode.getSelected()) {
 		case stick:
 			x = stick.getX();
 			y = stick.getY();
 			twist = stick.getZ();
+			
+			x = expcurve(x, 2.5);
+			y = expcurve(y, 2.5);
+			
+			speedLimit = (-stick.getThrottle() + 1) / 2;
+			
 			break;
 		case xbox:
 			x = stick.getX(Hand.kLeft);
-			y = stick.getY(Hand.kLeft);
+			y = stick.getY(Hand.kLeft); 	
 			twist = stick.getX(Hand.kRight);
 			break;
 		}
@@ -102,6 +108,10 @@ public class Robot extends IterativeRobot {
 		x = deadzone(x, 0.1);
 		y = deadzone(y, 0.1);
 		twist = deadzone(twist, 0.1);
+		
+		x = x * speedLimit;
+		y = y * speedLimit;
+		twist = twist * speedLimit;
 		
 		double gyro_a = gyro.getAngle();
 		
@@ -122,6 +132,11 @@ public class Robot extends IterativeRobot {
 		} else {
 			return value;
 		}
+	}
+	
+	private double expcurve(double value, double curve) {
+		double ret = Math.pow(Math.abs(value), curve);
+		return (ret * value > 0) ? ret: -ret;
 	}
 	
 }
