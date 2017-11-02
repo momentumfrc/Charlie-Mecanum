@@ -1,12 +1,17 @@
 package org.usfirst.frc.team4999.robot;
 
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+
+enum drivemode {xbox,stick};
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -23,6 +28,9 @@ public class Robot extends IterativeRobot {
 	Victor frontLeft, frontRight, backLeft, backRight;
 	
 	Joystick stick;
+	XboxController xbox;
+	
+	SendableChooser<drivemode> mode;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -40,6 +48,13 @@ public class Robot extends IterativeRobot {
 		drive = new RobotDrive(frontLeft, backLeft, frontRight, backRight);
 		
 		stick = new Joystick(1);
+		xbox = new XboxController(0);
+		
+		mode = new SendableChooser<drivemode>();
+		mode.addDefault("Flight Stick", drivemode.stick);
+		mode.addObject("XBox Controller", drivemode.xbox);
+		
+		SmartDashboard.putData("Drive Mode", mode);
 	}
 
 	/**
@@ -69,10 +84,20 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
+		double x = 0, y = 0, twist = 0;
+		switch(mode.getSelected()) {
+		case stick:
+			x = stick.getX();
+			y = stick.getY();
+			twist = stick.getZ();
+			break;
+		case xbox:
+			x = stick.getX(Hand.kLeft);
+			y = stick.getY(Hand.kLeft);
+			twist = stick.getX(Hand.kRight);
+			break;
+		}
 		
-		double x = stick.getX();
-		double y = stick.getY();
-		double twist = stick.getZ();
 		
 		x = deadzone(x, 0.1);
 		y = deadzone(y, 0.1);
