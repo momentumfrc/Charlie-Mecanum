@@ -31,7 +31,8 @@ public class Robot extends IterativeRobot {
 	XboxController xbox;
 	
 	SendableChooser<drivemode> mode;
-
+	
+	static double DEADZONE = 0.2;
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
@@ -51,8 +52,8 @@ public class Robot extends IterativeRobot {
 		xbox = new XboxController(0);
 		
 		mode = new SendableChooser<drivemode>();
-		mode.addDefault("Flight Stick", drivemode.stick);
-		mode.addObject("XBox Controller", drivemode.xbox);
+		mode.addObject("Flight Stick", drivemode.stick);
+		mode.addDefault("XBox Controller", drivemode.xbox);
 		
 		SmartDashboard.putData("Drive Mode", mode);
 	}
@@ -78,7 +79,11 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void autonomousPeriodic() {
 	}
-
+	
+	@Override
+	public void teleopInit(){
+		gyro.calibrate();
+	}
 	/**
 	 * This function is called periodically during operator control
 	 */
@@ -91,30 +96,29 @@ public class Robot extends IterativeRobot {
 			y = stick.getY();
 			twist = stick.getZ();
 			
-			x = expcurve(x, 2.5);
-			y = expcurve(y, 2.5);
-			
 			speedLimit = (-stick.getThrottle() + 1) / 2;
 			
 			break;
 		case xbox:
-			x = stick.getX(Hand.kLeft);
-			y = stick.getY(Hand.kLeft); 	
-			twist = stick.getX(Hand.kRight);
+			x = xbox.getX(Hand.kLeft);
+			y = xbox.getY(Hand.kLeft); 	
+			twist = xbox.getX(Hand.kRight);
 			break;
 		}
 		
 		
-		x = deadzone(x, 0.1);
-		y = deadzone(y, 0.1);
-		twist = deadzone(twist, 0.1);
+		x = deadzone(x, DEADZONE);
+		y = deadzone(y, DEADZONE);
+		x = expcurve(x, 2.5);
+		y = expcurve(y, 2.5);
+		twist = deadzone(twist, DEADZONE);
 		
 		x = x * speedLimit;
 		y = y * speedLimit;
 		twist = twist * speedLimit;
 		
 		double gyro_a = gyro.getAngle();
-		
+		// System.out.format("X:%.2f, Y:%.2f, twist:%.2f, gyro:%.2f\n", x, y, twist, gyro_a);
 		drive.mecanumDrive_Cartesian(x, y, twist, gyro_a);
 		
 	}
@@ -129,14 +133,21 @@ public class Robot extends IterativeRobot {
 	private double deadzone(double value, double zone) {
 		if(Math.abs(value) < zone) {
 			return 0;
-		} else {
-			return value;
+		} else if(value < 0) {
+			return map(value, -1, -zone, -1, 0);
+		} else if(value > 0) {
+			return map(value, zone, 1, 0, 1);
 		}
+		return 0;
 	}
 	
 	private double expcurve(double value, double curve) {
 		double ret = Math.pow(Math.abs(value), curve);
 		return (ret * value > 0) ? ret: -ret;
+	}
+	
+	private double map(double input, double minIn, double maxIn, double minOut, double maxOut) {
+		return minOut + (maxOut - minOut) * ((input - minIn) / (maxIn - minIn));
 	}
 	
 }
