@@ -1,15 +1,10 @@
 package org.usfirst.frc.team4999.robot;
 
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.TableEntryListener;
-import edu.wpi.first.networktables.TableListener;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Victor;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -48,8 +43,11 @@ public class Robot extends IterativeRobot {
 		
 		frontLeft = new Victor(0);
 		frontRight = new Victor(1);
+		frontRight.setInverted(true);
 		backLeft = new Victor(2);
 		backRight = new Victor(3);
+		backRight.setInverted(true);
+
 		
 		drive = new MecanumDrive(frontLeft, backLeft, frontRight, backRight);
 		drive.setDeadband(0);
@@ -63,7 +61,8 @@ public class Robot extends IterativeRobot {
 		
 		SmartDashboard.putData("Drive Mode", mode);
 		
-		SmartDashboard.putNumber("Deadzone", DEADZONE);
+		if(!SmartDashboard.containsKey("Deadzone")) 
+			SmartDashboard.putNumber("Deadzone", DEADZONE);
 		SmartDashboard.putNumber("Throttle", 1);
 		SmartDashboard.getEntry("Deadzone").setPersistent();
 		SmartDashboard.getEntry("Throttle").setPersistent();
@@ -100,7 +99,7 @@ public class Robot extends IterativeRobot {
 			
 			break;
 		case xbox:
-			x = xbox.getX(Hand.kLeft);
+			x = -xbox.getX(Hand.kLeft);
 			y = xbox.getY(Hand.kLeft); 	
 			twist = xbox.getX(Hand.kRight);
 			speedLimit = SmartDashboard.getNumber("Throttle",speedLimit);
