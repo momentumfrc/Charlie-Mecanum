@@ -1,6 +1,6 @@
 package org.usfirst.frc.team4999.robot;
 
-import java.util.HashSet;
+
 import java.util.HashMap;
 
 import edu.wpi.first.wpilibj.XboxController;
@@ -25,17 +25,13 @@ class RumbleValue {
  */
 public class BetterXBoxController extends XboxController {
 	// HashSets and HashMaps to hold data concerning buttons, rumbles, deadzones, and curves
-	HashSet<Integer> held;
+	private ControllerWrapper wrap;
 	HashMap<String, RumbleValue> rumbles;
-	HashMap<Integer, Double> deadzones;
-	HashMap<Integer, Double> curves;
 	
 	public BetterXBoxController(int port) {
 		super(port);
-		held = new HashSet<Integer>();
 		rumbles = new HashMap<String, RumbleValue>();
-		deadzones = new HashMap<Integer, Double>();
-		curves = new HashMap<Integer, Double>();
+		wrap = new ControllerWrapper(this);
 	}
 	
 	/**
@@ -44,17 +40,7 @@ public class BetterXBoxController extends XboxController {
 	 * @return True if this is the first push of the button. False otherwise
 	 */
 	public boolean isFirstPush(int button) {
-		if(this.getRawButton(button)) {
-			if(held.contains(button)) {
-				return false;
-			} else {
-				held.add(button);
-				return true;
-			}
-		} else {
-			held.remove(button);
-			return false;
-		}
+		return wrap.isFirstPush(button);
 	}
 	
 	public boolean isFirstPushA() {
@@ -90,12 +76,7 @@ public class BetterXBoxController extends XboxController {
 	 */
 	@Override
 	public double getRawAxis(int axis) {
-		double value = super.getRawAxis(axis);
-		if(deadzones.containsKey(axis) && Math.abs(value) < deadzones.get(axis))
-			value = 0;
-		if(curves.containsKey(axis))
-			value = expCurve(value, curves.get(axis));
-		return value;
+		return wrap.getRawAxis(axis);
 	}
 	
 	/**
@@ -104,7 +85,7 @@ public class BetterXBoxController extends XboxController {
 	 * @param value The deadzone to set
 	 */
 	public void setDeadzone(int axis, double value) {
-		deadzones.put(axis, value);
+		wrap.setDeadzone(axis, value);
 	}
 	/**
 	 * Sets a deadzone on the x axis of a stick on the controller
@@ -114,10 +95,10 @@ public class BetterXBoxController extends XboxController {
 	public void setDeadzoneX(Hand hand, double value) {
 		switch(hand) {
 		case kRight:
-			deadzones.put(4, value);
+			wrap.setDeadzone(4, value);
 			break;
 		case kLeft:
-			deadzones.put(0, value);
+			wrap.setDeadzone(0, value);
 			break;
 		}
 	}
@@ -129,10 +110,10 @@ public class BetterXBoxController extends XboxController {
 	public void setDeadzoneY(Hand hand, double value) {
 		switch(hand) {
 		case kRight:
-			deadzones.put(5, value);
+			wrap.setDeadzone(5, value);
 			break;
 		case kLeft:
-			deadzones.put(1, value);
+			wrap.setDeadzone(1, value);
 			break;
 		}
 	}
@@ -144,7 +125,7 @@ public class BetterXBoxController extends XboxController {
 	 * @param value The value of the curve.
 	 */
 	public void setCurve(int axis, double value) {
-		curves.put(axis,  value);
+		wrap.setCurve(axis,  value);
 	}
 	/**
 	 * Set a curve on the x axis of a stick on the controller
@@ -155,10 +136,10 @@ public class BetterXBoxController extends XboxController {
 	public void setCurveX(Hand hand, double value) {
 		switch(hand) {
 		case kRight:
-			curves.put(4, value);
+			wrap.setCurve(4, value);
 			break;
 		case kLeft:
-			curves.put(0, value);
+			wrap.setCurve(0, value);
 			break;
 		}
 	}
@@ -171,10 +152,10 @@ public class BetterXBoxController extends XboxController {
 	public void setCurveY(Hand hand, double value) {
 		switch(hand) {
 		case kRight:
-			curves.put(5, value);
+			wrap.setCurve(5, value);
 			break;
 		case kLeft:
-			curves.put(1, value);
+			wrap.setCurve(1, value);
 			break;
 		}
 	}
@@ -218,20 +199,5 @@ public class BetterXBoxController extends XboxController {
 		refreshRumbles();
 	}
 	
-	/**
-	 * Applies an exponential curve to the input
-	 * @param input The value to be processed
-	 * @param pow The curve to be set
-	 * @return The processed value
-	 */
-	private double expCurve(double input, double pow) {
-		if(input == 0)
-			return input;
-		double powed = Math.pow(Math.abs(input), pow);
-		if(input * powed > 0)
-			return powed;
-		else
-			return -powed;
-	}
 
 }

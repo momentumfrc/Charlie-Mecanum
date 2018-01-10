@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 
-enum drivemode {xbox,stick};
+enum drivemode {XBOX,STICK,F310};
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -28,6 +28,7 @@ public class Robot extends IterativeRobot {
 	
 	Joystick stick;
 	BetterXBoxController xbox;
+	ControllerWrapper f310;
 	
 	SendableChooser<drivemode> mode;
 	
@@ -54,10 +55,12 @@ public class Robot extends IterativeRobot {
 		
 		stick = new Joystick(1);
 		xbox = new BetterXBoxController(0);
+		f310 = new ControllerWrapper(new Joystick(2));
 		
 		mode = new SendableChooser<drivemode>();
-		mode.addObject("Flight Stick", drivemode.stick);
-		mode.addDefault("XBox Controller", drivemode.xbox);
+		mode.addObject("Flight Stick", drivemode.STICK);
+		mode.addObject("Logitech F310", drivemode.F310);
+		mode.addDefault("XBox Controller", drivemode.XBOX);
 		
 		SmartDashboard.putData("Drive Mode", mode);
 		
@@ -89,7 +92,7 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 		double x = 0, y = 0, twist = 0, speedLimit = 1;
 		switch(mode.getSelected()) {
-		case stick:
+		case STICK:
 			x = stick.getX();
 			y = stick.getY();
 			twist = stick.getZ();
@@ -98,12 +101,18 @@ public class Robot extends IterativeRobot {
 			SmartDashboard.putNumber("Throttle", speedLimit);
 			
 			break;
-		case xbox:
+		case XBOX:
 			x = -xbox.getX(Hand.kLeft);
 			y = xbox.getY(Hand.kLeft); 	
 			twist = xbox.getX(Hand.kRight);
 			speedLimit = SmartDashboard.getNumber("Throttle",speedLimit);
 			break;
+		case F310:
+			x = -f310.getRawAxis(0);
+			y = f310.getRawAxis(1);
+			twist = f310.getRawAxis(4);
+			speedLimit = SmartDashboard.getNumber("Throttle",speedLimit);
+			
 		}
 		
 		
@@ -117,7 +126,8 @@ public class Robot extends IterativeRobot {
 		y = y * speedLimit;
 		twist = twist * speedLimit;
 		
-		if(xbox.isFirstPushY()) {
+		if(xbox.isFirstPushY() || f310.isFirstPush(4)) {
+			drive.stopMotor();
 			gyro.calibrate();
 		}
 		double gyro_a = gyro.getAngle();
